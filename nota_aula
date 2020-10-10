@@ -1,0 +1,18 @@
+5 outubro>
+    hoje continuei interagindo com o terinal, quando desigamos certas funcoes, o terminal sofre alguns
+    efeitos colaterais, então temos que ter o cuidado de religar todas essas funções.
+    o comando fg retosna um programa do segundo plano
+    
+
+
+8 outubro>
+    -controlando para o programaca fechar com CTRL_KEY
+    -usando melhor o #define
+    -construindo uma macro bitwise-ANDs
+    -refatorando a entrada de dados do meu programa
+    -dividindo as responsabilidades
+    
+9 outubro>
+    -confugurando global da aplicação
+    -pegando a altura do terminal na mão de forma dinamica
+    -correção de alguns bugs
