@@ -16,3 +16,8 @@
     -confugurando global da aplicação
     -pegando a altura do terminal na mão de forma dinamica
     -correção de alguns bugs
+
+14 outubro>
+    -trabalhando com buffer
+    -trabalhando com memoria
+    -realloc () e free () 

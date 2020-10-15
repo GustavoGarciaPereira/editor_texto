@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
-
+#include <string.h>
 #include <sys/ioctl.h>
 
 /*** defines ***/
@@ -21,9 +21,6 @@ struct editorConfig{
 };
 
 struct editorConfig E;
-
-
-
 
 /*** terminal ***/
 void die(const char *s){
@@ -99,24 +96,46 @@ int getWindowSize(int *rows, int *cols){
   }
 }
 
+/*** append buffer ***/
+struct abuf{
+  char *b;
+  int len;
+};
+
+#define ABUF_INIT {NULL, 0}
+
+void abAppend(struct abuf *ab, const char *s, int len){
+  char *new = realloc(ab->b, ab->len + len);
+  if (new == NULL)return;
+  memcpy(&new[ab->len],s, len);
+  ab->b=new;
+  ab->len += len;
+
+}
+void abFree(struct abuf *ab){
+  free(ab->b);
+}
 /***output***/
-void editorDrawsRows(){
+void editorDrawsRows(struct abuf *ab){
   int y;
   for (y = 0;y < E.screenrows; y++){
-    write(STDIN_FILENO,"~\r\n",1);
+    abAppend(ab,"~",1);
     if (y < E.screenrows -1){
-      write(STDIN_FILENO,"\r\n",2);
+      abAppend(ab,"\r\n",2);
     }
   }
 }
 
 void editorRefreshScreen(){
-  write(STDIN_FILENO,"\x1b[2J",4);
-  write(STDIN_FILENO,"\x1b[H",3);
+  struct abuf ab = ABUF_INIT;
+  abAppend(&ab, "\x1b[2J",4);
+  abAppend(&ab, "\x1b[H",3);
   
-  editorDrawsRows();
+  editorDrawsRows(&ab);
 
-  write(STDIN_FILENO,"\x1b[H",3);
+  abAppend(&ab,"\x1b[H",3);
+  write(STDIN_FILENO, ab.b,ab.len);
+  abFree(&ab);
 }
 /*** input ***/
 void editorProcessKeypress(){
