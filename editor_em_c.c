@@ -12,12 +12,14 @@
 /*** defines ***/
 
 #define CTRL_KEY(k)((k) & 0x1f)
+#define GUGU_VERSION "0.0.1"
 
 /*** data ***/
 struct editorConfig{
+  int cx, cy;
   int screenrows;
   int screencols;
-  struct termios orig_terminos;
+  struct termios orig_termios;
 };
 
 struct editorConfig E;
@@ -32,15 +34,15 @@ void die(const char *s){
 }
 
 void disableRawMode(){
-  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.orig_terminos) == -1)
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.orig_termios) == -1)
     die("tcsetattr");
 }
 
 void enableRawMode(){
-  if (tcgetattr(STDIN_FILENO, &E.orig_terminos)) die("tcgetattr");
+  if (tcgetattr(STDIN_FILENO, &E.orig_termios)) die("tcgetattr");
   atexit(disableRawMode);
 
-  struct termios raw = E.orig_terminos;//come from <termios.h>.
+  struct termios raw = E.orig_termios;//come from <termios.h>.
   raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
   raw.c_oflag &= ~(OPOST);
   raw.c_cflag |= (CS8);
@@ -54,7 +56,7 @@ void enableRawMode(){
 }
 
 char editorReadKey(){
-  int nread=0;
+  int nread =0;
   char c;
   while((nread == read(STDIN_FILENO, &c,1)) != 1){
     if (nread == -1 && errno != EAGAIN) die("read");
@@ -119,7 +121,26 @@ void abFree(struct abuf *ab){
 void editorDrawsRows(struct abuf *ab){
   int y;
   for (y = 0;y < E.screenrows; y++){
-    abAppend(ab,"~",1);
+    if (y == E.screenrows/3){
+      char welcome[80];
+      int welcomelen = snprintf(welcome,sizeof(welcome),
+      "gugu editor --version %s",GUGU_VERSION);
+      if (welcomelen > E.screencols) welcomelen = E.screencols;
+      int padding = (E.screencols - welcomelen) / 2;
+      if (padding){
+        abAppend(ab, "~", 1);
+        padding --;
+      }
+
+
+      while (padding --) abAppend(ab, " ",1);
+      abAppend(ab, welcome, welcomelen);
+
+    }else{
+      abAppend(ab, "~", 1);
+    }
+
+    abAppend(ab, "\x1b[K", 3);
     if (y < E.screenrows -1){
       abAppend(ab,"\r\n",2);
     }
@@ -128,16 +149,46 @@ void editorDrawsRows(struct abuf *ab){
 
 void editorRefreshScreen(){
   struct abuf ab = ABUF_INIT;
-  abAppend(&ab, "\x1b[2J",4);
+
+  abAppend(&ab, "\x1b[?25l", 6);
+  //abAppend(&ab, "\x1b[2J",4);
   abAppend(&ab, "\x1b[H",3);
   
   editorDrawsRows(&ab);
 
-  abAppend(&ab,"\x1b[H",3);
+  char buf[32];
+  snprintf(buf,sizeof(buf),"\x1b[%d;%dH",E.cy + 1, E.cx + 1);
+  abAppend(&ab,buf, strlen(buf));
+
+  abAppend(&ab, "\x1b[?25h", 6);
+
   write(STDIN_FILENO, ab.b,ab.len);
   abFree(&ab);
 }
 /*** input ***/
+void editorMoveCursor(char key){
+  switch(key){
+    case 'a':
+      E.cx--;
+      break;
+
+    case 'd':
+      E.cx++;
+      break;
+
+    case 'w':
+      E.cy--;
+      break;
+
+    case 's':
+      E.cy++;
+      break;
+  }
+}
+
+
+
+
 void editorProcessKeypress(){
   char c = editorReadKey();
   switch(c){
@@ -146,12 +197,22 @@ void editorProcessKeypress(){
       write(STDIN_FILENO,"\x1b[H",3);
       exit(0);
       break;
+    
+    case 'a':
+    case 'd':
+    case 'w':
+    case 's':
+      editorMoveCursor(c);
+      break;
 
   }
 }
 
 /*** init ***/
 void initEditor(){
+  E.cx = 0;
+  E.cy = 0;
+
   if (getWindowSize(&E.screenrows, &E.screencols)==-1) die("getWindowSize");
 }
 int main(){
