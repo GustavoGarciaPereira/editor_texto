@@ -1,6 +1,7 @@
 # editor_texto
 ## fazendo meu próprio editor de texto em C
 sim é isso mesmo meu próprio editor de texto em C
+
 ![grab-landing-page](https://media.giphy.com/media/E6jscXfv3AkWQ/giphy.gif)
 
 
@@ -8,6 +9,7 @@ sim é isso mesmo meu próprio editor de texto em C
 Os principais motivos que levam uma pessoa a fazer isso,
 estudo curiosidade, uma vez me disseram que era difícil.
 De fato é difícil, mas estou me divertindo muito.
+
 ![grab-landing-page](https://media.giphy.com/media/ny7UCd6JETnmE/giphy.gif)
 
 
