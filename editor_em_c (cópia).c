@@ -31,9 +31,6 @@ enum editorKey {
   DEL_KEY
 };
 
-
-
-
 /*** data ***/
 typedef struct erow{
   int size;
